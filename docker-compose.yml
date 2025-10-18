@@ -1,0 +1,58 @@
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "Samsung@1205"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ignitia-network
+
+  course-service:
+    build: ./courseService
+    container_name: course-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-db:5432/course_db"
+      SPRING_DATASOURCE_USERNAME: "postgres"
+      SPRING_DATASOURCE_PASSWORD: "Samsung@1205"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    depends_on:
+      - postgres-db
+    networks:
+      - ignitia-network
+
+  student-service:
+    build: ./studentService
+    container_name: student-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-db:5432/student_db"
+      SPRING_DATASOURCE_USERNAME: "postgres"
+      SPRING_DATASOURCE_PASSWORD: "Samsung@1205"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    depends_on:
+      - postgres-db
+    networks:
+      - ignitia-network
+
+  api-gateway:
+    build: ./apiGateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - course-service
+      - student-service
+    networks:
+      - ignitia-network
+
+networks:
+  ignitia-network:
+    driver: bridge
